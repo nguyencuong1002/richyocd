@@ -79,8 +79,11 @@
         border-radius:14px;overflow:hidden;text-decoration:none;
         transition:transform .18s,border-color .18s,background-color .18s}
   .card:hover{transform:translateY(-3px);border-color:#45454d;background:var(--card-hi)}
-  .card .thumb{aspect-ratio:1;background:#1e1e21;overflow:hidden}
+  .card .thumb{position:relative;aspect-ratio:1;background:#1e1e21;overflow:hidden}
   .card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .card .sold{position:absolute;left:7px;bottom:7px;padding:3px 8px;border-radius:999px;
+              background:rgba(0,0,0,.66);color:#fff;font-size:11px;font-weight:600;
+              letter-spacing:.01em;backdrop-filter:blur(4px)}
   .card .txt{padding:10px 11px 12px;min-width:0}
   .card .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
            overflow-wrap:anywhere;font-size:14px;font-weight:650;line-height:1.35}
@@ -119,26 +122,32 @@
   <footer class="grad grad--anim">Basic clothing aims for minimalism&nbsp;♥</footer>
 </main>
 
-<script src="products.js"></script>
 <script>
   const TABS = [["ao","Áo"],["quan","Quần"],["fullset","Fullset"]];
   const $tabs = document.getElementById('tabs'), $grid = document.getElementById('products-panel');
-  const PRODUCTS = window.PRODUCTS || [];
-  const wanted = new URLSearchParams(location.search).get('c');
-  let cur = TABS.some(([id]) => id === wanted) ? wanted
-          : (TABS.find(([id]) => PRODUCTS.some(p => p.c === id)) || TABS[0])[0];
-
-  TABS.forEach(([id,label])=>{
-    const b = document.createElement('button');
-    b.textContent = label; b.dataset.id = id;
-    b.type = 'button';
-    b.setAttribute('role','tab');
-    b.setAttribute('aria-controls','products-panel');
-    b.onclick = ()=>{ cur = id; history.replaceState(null, '', '?c=' + id); render(); };
-    $tabs.append(b);
-  });
-
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // products.csv: cat,title,desc,img,link,sold  (co quote khi o chua dau phay)
+  const parseCSV = txt => {
+    const rows = []; let row = [], f = '', q = false;
+    for (let i = 0; i < txt.length; i++) {
+      const ch = txt[i];
+      if (q) {
+        if (ch === '"') { if (txt[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += ch;
+      }
+      else if (ch === '"') q = true;
+      else if (ch === ',') { row.push(f); f = ''; }
+      else if (ch === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+      else if (ch !== '\r') f += ch;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    const head = rows.shift().map(h => h.trim());
+    return rows.filter(r => r.some(v => v.trim() !== '')).map(r => {
+      const o = {}; head.forEach((h, i) => o[h] = (r[i] ?? '').trim());
+      return { c:o.cat, t:o.title, s:o.desc, i:o.img, l:o.link, sold:o.sold };
+    });
+  };
 
   // Title Case cho tên sản phẩm. Giữ nguyên viết hoa của mã/từ viết tắt.
   const KEEP = new Set(['gsm','xl','xxl','xxxl','xs','nb']);
@@ -153,21 +162,50 @@
     return w.split('-').map(capFirst).join('-');
   }).join(' ');
 
+  let PRODUCTS = [], cur = TABS[0][0];
+
+  TABS.forEach(([id,label])=>{
+    const b = document.createElement('button');
+    b.textContent = label; b.dataset.id = id;
+    b.type = 'button';
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-controls','products-panel');
+    b.onclick = ()=>{ cur = id; history.replaceState(null, '', '?c=' + id); render(); };
+    $tabs.append(b);
+  });
+
   function render(){
     [...$tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === cur)));
     const list = PRODUCTS.filter(p => p.c === cur);
     $grid.innerHTML = list.map((p,idx) => `
       <a class="card" href="${esc(p.l)}" target="_blank" rel="noopener sponsored">
-        <div class="thumb"><img loading="${idx ? 'lazy' : 'eager'}" ${idx ? '' : 'fetchpriority="high" '}decoding="async"
-             referrerpolicy="no-referrer" width="800" height="800"
-             src="${esc(p.i || '')}" alt="${esc(titleCase(p.t) || 'Ảnh sản phẩm')}"></div>
+        <div class="thumb">
+          <img loading="${idx ? 'lazy' : 'eager'}" ${idx ? '' : 'fetchpriority="high" '}decoding="async"
+               referrerpolicy="no-referrer" width="800" height="800"
+               src="${esc(p.i || '')}" alt="${esc(p.t || 'Ảnh sản phẩm')}">
+          ${p.sold ? `<span class="sold">${esc(p.sold)} đã bán</span>` : ''}
+        </div>
         <div class="txt">
           <span class="t grad">${esc(titleCase(p.t) || 'Sản phẩm')}</span>
           ${p.s ? `<span class="s">${esc(p.s)}</span>` : ''}
         </div>
       </a>`).join('') || '<p class="empty grad">Chưa có sản phẩm trong mục này…</p>';
   }
-  render();
+
+  (async () => {
+    try {
+      const res = await fetch('products.csv', { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      PRODUCTS = parseCSV(await res.text());
+    } catch (e) {
+      $grid.innerHTML = `<p class="empty">Không đọc được products.csv (${esc(e.message)})<br>Cần chạy qua http, không mở trực tiếp file://</p>`;
+      return;
+    }
+    const wanted = new URLSearchParams(location.search).get('c');
+    cur = TABS.some(([id]) => id === wanted) ? wanted
+        : (TABS.find(([id]) => PRODUCTS.some(p => p.c === id)) || TABS[0])[0];
+    render();
+  })();
 </script>
 </body>
 </html>

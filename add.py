@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-"""Them 1 san pham vao products.js tu link affiliate Shopee.
+"""Them 1 san pham vao products.csv tu link affiliate Shopee.
 
-  python add.py "<link>" -c ao [-t ten] [-d mo-ta] [-i anh] [--expect-item ID] [--push]
+  python add.py "<link>" -c ao [-t ten] [-d mo-ta] [-i anh] [-s "30k+"] [--expect-item ID] [--push]
 
 --expect-item  = id san pham tren trang offer (vd 40604188350). Script moi link
                  affiliate ra URL that roi doi chieu id, bat truong hop copy nham link.
---dry-run      = chi kiem tra, khong ghi vao products.js.
+--dry-run      = chi kiem tra, khong ghi vao products.csv.
 
 Khi them NHIEU link: nghi 2-3s giua cac lan goi (Shopee de chan neu goi don dap).
 """
-import argparse, html, re, subprocess, sys, urllib.request
+import argparse, html, os, re, subprocess, sys, urllib.request
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125 Safari/537.36"
 CATS = ("ao", "quan", "fullset")
+CSV = "products.csv"
 IMG_OK = re.compile(r"^https://[\w-]+\.img\.susercontent\.com/")
 NUM_RE = re.compile(r"\d{6,}")
 
@@ -60,12 +61,17 @@ def check_link(url, expect_item, verified):
     print(f"  [ok] doi chieu link: id {expect_item} khop")
 
 
-def js_line(p):
-    parts = [f'c:"{p["c"]}"']
-    for k in ("t", "s", "i", "l"):
-        if p.get(k):
-            parts.append(f'{k}:"{p[k].replace(chr(92), "").replace(chr(34), "")}"')
-    return "  {" + ", ".join(parts) + "},"
+def csv_field(v):
+    """Ghi 1 o CSV, quote khi can (ten san pham hay co dau phay)."""
+    v = str(v or "").replace("\r", " ").replace("\n", " ").strip()
+    return f'"{v.replace(chr(34), chr(34) * 2)}"' if any(c in v for c in ',"') else v
+
+
+def csv_row(p):
+    return ",".join(csv_field(p[k]) for k in ("c", "t", "s", "i", "l", "sold"))
+
+
+HEADER = "cat,title,desc,img,link,sold\n"
 
 
 def main():
@@ -75,13 +81,14 @@ def main():
     ap.add_argument("-t", "--title", default="")
     ap.add_argument("-d", "--desc", default="", help="mo ta phu hien duoi ten")
     ap.add_argument("-i", "--img", default="")
+    ap.add_argument("-s", "--sold", default="", help="luot ban hien tren the, vd 30k+")
     ap.add_argument("--expect-item", default="", help="id san pham de doi chieu link")
     ap.add_argument("--no-verify", action="store_true", help="bo qua doi chieu link")
     ap.add_argument("--dry-run", action="store_true", help="chi kiem tra, khong ghi")
     ap.add_argument("--push", action="store_true", help="git commit + push sau khi them")
     a = ap.parse_args()
 
-    src = open("products.js", encoding="utf-8").read()
+    src = open(CSV, encoding="utf-8").read() if os.path.exists(CSV) else HEADER
 
     verified = [False]
     if not a.no_verify:
@@ -94,29 +101,31 @@ def main():
     except Exception as e:
         print(f"[!] khong lay duoc og tags ({e}) - phai nhap -t / -i", file=sys.stderr)
 
-    p = {"c": a.cat, "t": a.title or title or "", "s": a.desc, "i": a.img or img, "l": a.url}
+    p = {"c": a.cat, "t": a.title or title or "", "s": a.desc,
+         "i": a.img or img, "l": a.url, "sold": a.sold}
 
     if not p["t"]:
         die("thieu ten san pham (--title)")
     if not IMG_OK.match(p["i"] or ""):
         print(f"[!] anh khong phai CDN Shopee: {p['i'][:70] or '(trong)'}", file=sys.stderr)
 
-    print("  ten:", p["t"][:60])
-    print("  anh:", p["i"][:80] or "(trong)")
+    print("  ten :", p["t"][:60])
+    print("  anh :", p["i"][:80] or "(trong)")
+    print("  ban :", p["sold"] or "(trong)")
 
     if a.dry_run:
         print("  [ok] dry-run, khong ghi gi")
         return
 
-    if f'l:"{a.url}"' in src:
-        die("link nay da co trong products.js")
+    if a.url in src:
+        die(f"link nay da co trong {CSV}")
 
-    marker = "window.PRODUCTS = ["
-    i = src.index(marker) + len(marker)
-    open("products.js", "w", encoding="utf-8").write(src[:i] + "\n" + js_line(p) + src[i:])
+    if not src.endswith("\n"):
+        src += "\n"
+    open(CSV, "w", encoding="utf-8").write(src + csv_row(p) + "\n")
 
     if a.push:
-        subprocess.run(["git", "add", "products.js"], check=True)
+        subprocess.run(["git", "add", CSV], check=True)
         subprocess.run(["git", "commit", "-m", f"add: {p['t'][:50]}"], check=True)
         subprocess.run(["git", "push"], check=True)
         print("  -> pushed")
