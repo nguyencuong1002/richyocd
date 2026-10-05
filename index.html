@@ -63,7 +63,7 @@
 <script>
   const TABS = [["ao","Áo"],["quan","Quần"],["fullset","Fullset"]];
   const $tabs = document.getElementById('tabs'), $grid = document.getElementById('grid');
-  let cur = TABS[0][0];
+  let cur = (TABS.find(([id]) => (window.PRODUCTS || []).some(p => p.c === id)) || TABS[0])[0];
 
   TABS.forEach(([id,label])=>{
     const b = document.createElement('button');
