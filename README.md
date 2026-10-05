@@ -35,10 +35,19 @@ Rồi chạy:
 ```bash
 python add.py "<link affiliate>" -c ao \
   -t "Tên sản phẩm" -d "Mô tả phụ" \
-  -i "https://down-vn.img.susercontent.com/..." --push
+  -i "https://down-vn.img.susercontent.com/..." \
+  --expect-item 40604188350 --push
 ```
 
 Không cần `-t`/`-i` nếu dùng link Shopee thường (không phải link affiliate) — khi đó script tự lấy.
+
+### Quy tắc khi làm nhiều link
+
+- **Nghỉ 2–3s giữa các link.** Gọi dồn dập dễ bị Shopee chặn.
+- **Luôn truyền `--expect-item <id>`** (id trên URL trang offer). Script mở link ra URL thật rồi đối chiếu id — bắt được trường hợp copy nhầm/thiếu ký tự.
+- **Chạy `--dry-run` trước** khi ghi thật, để xem tên/ảnh/link có đúng không.
+- Script tự chặn: link không mở được, id không khớp, thiếu tên, link đã có trong `products.js`.
+- Cảnh báo (không chặn): ảnh không thuộc CDN `*.img.susercontent.com`.
 
 Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 
