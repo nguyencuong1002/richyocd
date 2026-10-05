@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b0b0c">
-<title>Richyocd — Sản phẩm mình đang dùng</title>
+<meta name="theme-color" content="#12100c">
+<title>Richyocd · Sản phẩm mình đang dùng</title>
 <link rel="preconnect" href="https://down-vn.img.susercontent.com" crossorigin>
 <style>
   :root{--bg:#0b0b0c;--card:#151517;--card-hi:#1c1c1f;--line:#2a2a2e;--fg:#f5f5f7;
@@ -24,6 +24,27 @@
        font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
        -webkit-font-smoothing:antialiased;touch-action:manipulation;
        -webkit-tap-highlight-color:transparent}
+  /* Ambient layer: 3 khoi radial-gradient troi lech nhau. Chi animate transform
+     (compositor) - khong dung filter:blur de do nang GPU tren mobile. */
+  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+      transform:translateZ(0);
+      background:radial-gradient(140% 90% at 50% -20%,#17110a 0%,transparent 62%)}
+  .bg i{position:absolute;display:block;width:78vmax;height:78vmax;border-radius:50%;
+        will-change:transform;animation:drift 38s ease-in-out infinite}
+  .bg i:nth-child(1){top:-30vmax;left:-26vmax;animation-duration:38s;
+      background:radial-gradient(circle,rgba(251,140,0,.20) 0%,rgba(251,140,0,.07) 34%,transparent 68%)}
+  .bg i:nth-child(2){bottom:-34vmax;right:-30vmax;animation-duration:46s;animation-direction:reverse;
+      background:radial-gradient(circle,rgba(239,108,0,.17) 0%,rgba(239,108,0,.06) 36%,transparent 70%)}
+  .bg i:nth-child(3){top:24%;left:36%;width:62vmax;height:62vmax;animation-duration:54s;
+      background:radial-gradient(circle,rgba(255,217,166,.10) 0%,transparent 66%)}
+  /* Vignette de chu khong bi loang mau o ria man hinh */
+  .bg::after{content:"";position:absolute;inset:0;
+      background:radial-gradient(130% 100% at 50% 0%,transparent 38%,rgba(0,0,0,.66) 100%)}
+  @keyframes drift{
+    0%,100%{transform:translate3d(0,0,0) scale(1)}
+    33%    {transform:translate3d(9%,7%,0) scale(1.10)}
+    66%    {transform:translate3d(-7%,11%,0) scale(1.05)}
+  }
   a{color:inherit}
   :focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:4px}
   main{max-width:1000px;margin:0 auto;padding:28px 20px calc(64px + env(safe-area-inset-bottom))}
@@ -37,11 +58,13 @@
   .social a:hover{opacity:1;background:#202024}
   .social svg{width:23px;height:23px;display:block}
 
-  nav{position:sticky;top:0;z-index:2;display:flex;gap:10px;background:var(--bg);
+  nav{position:sticky;top:0;z-index:2;display:flex;gap:10px;
+      background:rgba(11,11,12,.82);backdrop-filter:blur(14px) saturate(130%);
+      -webkit-backdrop-filter:blur(14px) saturate(130%);
       padding:12px 0 16px;margin:0 0 6px}
-  nav button{flex:1;min-height:48px;padding:12px 6px;border-radius:12px;
+  nav button{flex:1;min-height:44px;padding:10px 6px;border-radius:12px;
       border:1px solid var(--line);background:linear-gradient(180deg,#1e1e22,#141416);
-      color:var(--dim);font-family:inherit;font-size:15.5px;font-weight:700;line-height:1;
+      color:var(--dim);font-family:inherit;font-size:15px;font-weight:700;line-height:1;
       letter-spacing:.01em;cursor:pointer;
       transition:color .15s,border-color .15s,background-image .15s,box-shadow .15s}
   nav button:hover{color:var(--fg);border-color:#3d3d44;background-image:linear-gradient(180deg,#2a2a2f,#1c1c20)}
@@ -77,10 +100,27 @@
 
   .bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0 0 12px}
   .bar label{color:var(--dim);font-size:13px}
-  .bar select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;
+  .bar select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:12px;
       padding:8px 10px;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;
-      min-height:40px;cursor:pointer;transition:border-color .15s,background-color .15s}
+      min-height:44px;cursor:pointer;transition:border-color .15s,background-color .15s}
   .bar select:hover{border-color:#3d3d44;background:var(--card-hi)}
+
+  /* iPhone: thu nho tab + gian cach. Tab giu min 44px theo Apple HIG. */
+  @media(max-width:640px){
+    main{padding:20px 14px calc(48px + env(safe-area-inset-bottom))}
+    header{gap:14px;margin-bottom:20px}
+    header img{width:64px;height:64px}
+    .name{font-size:24px;margin-bottom:8px}
+    .social a{width:42px;height:42px}
+    nav{gap:7px;padding:8px 0 10px}
+    nav button{min-height:44px;padding:8px 4px;font-size:13.5px;border-radius:12px;letter-spacing:0}
+    .bar{gap:6px;margin-bottom:10px}
+    .bar label{font-size:12px}
+    .bar select{padding:7px 9px;font-size:13px}
+    .card .t{font-size:13.5px}
+    /* vmax lon hon tren man hep -> giam do dam cho khoi choi */
+    .bg i{opacity:.72}
+  }
 
   .card{display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--line);
         border-radius:14px;overflow:hidden;text-decoration:none;
@@ -105,6 +145,7 @@
 </style>
 </head>
 <body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
 <main>
   <header>
     <img src="avatar.png" width="76" height="76" alt="Ảnh đại diện Richyocd" fetchpriority="high"
@@ -140,7 +181,7 @@
   const $tabs = document.getElementById('tabs'), $grid = document.getElementById('products-panel');
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-  // products.csv: cat,title,img,link,sold  (co quote khi o chua dau phay)
+  // products.csv: id,cat,title,img,link,sold  (co quote khi o chua dau phay)
   const parseCSV = txt => {
     const rows = []; let row = [], f = '', q = false;
     for (let i = 0; i < txt.length; i++) {
@@ -226,6 +267,7 @@
   }
 
   (async () => {
+    $grid.innerHTML = '<p class="empty grad">Đang tải sản phẩm…</p>';
     try {
       const res = await fetch('products.csv', { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
