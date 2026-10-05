@@ -36,9 +36,21 @@
       letter-spacing:.01em;cursor:pointer;
       transition:color .15s,border-color .15s,background-image .15s,box-shadow .15s}
   nav button:hover{color:var(--fg);border-color:#3d3d44;background-image:linear-gradient(180deg,#2a2a2f,#1c1c20)}
-  nav button[aria-selected="true"]{color:#fff;border-color:transparent;
-      background-image:linear-gradient(135deg,#d62976 0%,#962fbf 55%,#4f5bd5 100%);
-      box-shadow:0 4px 18px rgba(150,47,191,.30)}
+  nav button[aria-selected="true"]{color:#231000;border-color:transparent;
+      background-color:#ff6a1f;
+      background-image:
+        radial-gradient(circle at 18% 24%, #ffd08a 0%, transparent 62%),
+        radial-gradient(circle at 82% 18%, #ff3d00 0%, transparent 66%),
+        radial-gradient(circle at 72% 84%, #ff9500 0%, transparent 60%),
+        radial-gradient(circle at 22% 88%, #e63312 0%, transparent 64%);
+      background-size:120% 120%,150% 150%,135% 135%,165% 165%;
+      background-position:0% 0%,100% 0%,100% 100%,0% 100%;
+      animation:mesh 7s ease-in-out infinite;
+      box-shadow:0 4px 18px rgba(238,77,45,.35)}
+  @keyframes mesh{
+    0%,100%{background-position:0% 0%,100% 0%,100% 100%,0% 100%}
+    50%    {background-position:100% 100%,0% 100%,0% 0%,100% 0%}
+  }
 
   #products-panel{display:grid;gap:12px;
       grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
@@ -60,7 +72,7 @@
   footer{margin-top:32px;text-align:center;color:#7c7c85;font-size:13.5px}
 
   @media(prefers-reduced-motion:reduce){
-    *{transition:none!important}
+    *{transition:none!important;animation:none!important}
     .card:hover{transform:none}
   }
 </style>
