@@ -59,9 +59,16 @@
   .social svg{width:23px;height:23px;display:block}
 
   nav{position:sticky;top:0;z-index:2;display:flex;gap:10px;
-      background:rgba(11,11,12,.82);backdrop-filter:blur(14px) saturate(130%);
-      -webkit-backdrop-filter:blur(14px) saturate(130%);
-      padding:12px 0 16px;margin:0 0 6px}
+      background:transparent;padding:12px 0 16px;margin:0 0 6px}
+  /* Dai kinh full-bleed, bat len khi tab bi ghim (cuon). Tach rieng khoi nav
+     de khong tao ra mot hinh chu nhat toi nam giua nen sang. */
+  .navbg{position:fixed;top:0;left:0;right:0;height:var(--navh,72px);z-index:1;
+      pointer-events:none;opacity:0;transition:opacity .25s ease;background:transparent}
+  /* backdrop-filter chi bat khi .on: tranh blur toan viewport luc khong dung */
+  .navbg.on{opacity:1;background:rgba(11,11,12,.86);
+      backdrop-filter:blur(14px) saturate(130%);
+      -webkit-backdrop-filter:blur(14px) saturate(130%)}
+  #navsent{display:block;height:1px;margin-bottom:-1px}
   nav button{flex:1;min-height:44px;padding:10px 6px;border-radius:12px;
       border:1px solid var(--line);background:linear-gradient(180deg,#1e1e22,#141416);
       color:var(--dim);font-family:inherit;font-size:15px;font-weight:700;line-height:1;
@@ -146,6 +153,7 @@
 </head>
 <body>
 <div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="navbg" aria-hidden="true"></div>
 <main>
   <header>
     <img src="avatar.png" width="76" height="76" alt="Ảnh đại diện Richyocd" fetchpriority="high"
@@ -163,6 +171,7 @@
     </div>
   </header>
 
+  <span id="navsent" aria-hidden="true"></span>
   <nav id="tabs" role="tablist" aria-label="Danh mục sản phẩm"></nav>
   <div class="bar">
     <label for="sort">Sắp xếp</label>
@@ -246,6 +255,14 @@
 
   const $sort = document.getElementById('sort');
   $sort.onchange = ()=>{ sort = $sort.value; syncURL(); render(); };
+
+  // Dai kinh cua nav: bat khi tab bi ghim (sentinel 1px chay ra khoi viewport)
+  const $navbg = document.querySelector('.navbg');
+  const setNavH = () => document.documentElement.style.setProperty('--navh', $tabs.offsetHeight + 'px');
+  setNavH();
+  addEventListener('resize', setNavH, { passive: true });
+  new IntersectionObserver(([e]) => $navbg.classList.toggle('on', !e.isIntersecting))
+    .observe(document.getElementById('navsent'));
 
   function render(){
     [...$tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === cur)));
