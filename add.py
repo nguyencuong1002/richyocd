@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Them 1 san pham vao products.csv tu link affiliate Shopee.
 
-  python add.py "<link>" -c ao [-t ten] [-d mo-ta] [-i anh] [-s "30k+"] [--expect-item ID] [--push]
+  python add.py "<link>" -c ao [-t ten] [-i anh] [-s "30k+"] [--expect-item ID] [--push]
+  python add.py "<link>" -c ao -p "<link shopee.vn/product/...>" -s "30k+" --expect-item ID
 
 --expect-item  = id san pham tren trang offer (vd 40604188350). Script moi link
                  affiliate ra URL that roi doi chieu id, bat truong hop copy nham link.
@@ -9,7 +10,7 @@
 
 Khi them NHIEU link: nghi 2-3s giua cac lan goi (Shopee de chan neu goi don dap).
 """
-import argparse, html, os, re, subprocess, sys, urllib.request
+import argparse, csv, html, os, re, subprocess, sys, urllib.request
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125 Safari/537.36"
 CRAWLER_UA = "facebookexternalhit/1.1"
@@ -87,10 +88,32 @@ def csv_field(v):
 
 
 def csv_row(p):
-    return ",".join(csv_field(p[k]) for k in ("c", "t", "s", "i", "l", "sold"))
+    return ",".join(csv_field(p[k]) for k in ("id", "c", "t", "i", "l", "sold"))
 
 
-HEADER = "cat,title,desc,img,link,sold\n"
+HEADER = "id,cat,title,img,link,sold\n"
+
+STOP = {"ao", "áo", "quan", "quần", "nam", "nữ", "unisex", "cho", "có", "và", "vải",
+        "chất", "liệu", "form", "rộng", "the", "của", "dây", "với"}
+
+
+def toks(s):
+    return {t for t in re.sub(r"[^\w\s]", " ", str(s).lower()).split()
+            if len(t) > 2 and t not in STOP}
+
+
+def find_dupe(src, pid, title):
+    """Trung khi trung id san pham, hoac ten giong nhau >= 50% token."""
+    new = toks(title)
+    for row in csv.DictReader(src.splitlines()):
+        if pid and row.get("id") == pid:
+            return f"id {pid} da co: {row.get('title', '')[:50]}"
+        old = toks(row.get("title", ""))
+        if old and new:
+            j = len(new & old) / len(new | old)
+            if j >= 0.5:
+                return f"ten giong {j:.0%}: {row.get('title', '')[:50]}"
+    return None
 
 
 def main():
@@ -98,12 +121,12 @@ def main():
     ap.add_argument("url")
     ap.add_argument("-c", "--cat", required=True, choices=CATS)
     ap.add_argument("-t", "--title", default="")
-    ap.add_argument("-d", "--desc", default="", help="mo ta phu hien duoi ten")
     ap.add_argument("-i", "--img", default="")
     ap.add_argument("-p", "--product-url", default="", help="link shopee.vn/product/... de lay anh khi link affiliate chan bot")
     ap.add_argument("-s", "--sold", default="", help="luot ban hien tren the, vd 30k+")
     ap.add_argument("--expect-item", default="", help="id san pham de doi chieu link")
     ap.add_argument("--no-verify", action="store_true", help="bo qua doi chieu link")
+    ap.add_argument("--force", action="store_true", help="them ca khi nghi trung san pham")
     ap.add_argument("--dry-run", action="store_true", help="chi kiem tra, khong ghi")
     ap.add_argument("--push", action="store_true", help="git commit + push sau khi them")
     a = ap.parse_args()
@@ -121,8 +144,8 @@ def main():
     except Exception as e:
         print(f"[!] khong lay duoc og tags ({e}) - phai nhap -t / -i", file=sys.stderr)
 
-    p = {"c": a.cat, "t": a.title or title or "", "s": a.desc,
-         "i": a.img or img, "l": a.url, "sold": a.sold}
+    p = {"id": a.expect_item, "c": a.cat, "t": a.title or title or "", "i": a.img or img,
+         "l": a.url, "sold": a.sold}
 
     if not p["t"]:
         die("thieu ten san pham (--title)")
@@ -132,6 +155,11 @@ def main():
     print("  ten :", p["t"][:60])
     print("  anh :", p["i"][:80] or "(trong)")
     print("  ban :", p["sold"] or "(trong)")
+
+    if not a.force:
+        dup = find_dupe(src, p["id"], p["t"])
+        if dup:
+            die(f"nghi TRUNG -> {dup}\n    dung --force neu that su la san pham khac")
 
     if a.dry_run:
         print("  [ok] dry-run, khong ghi gi")

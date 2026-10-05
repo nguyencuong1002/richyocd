@@ -30,12 +30,12 @@ Trang affiliate chặn bot nên `add.py` không tự lấy được `og:` tags. 
 3. Chuột phải ảnh thumbnail → **Copy image address** → dán vào `-i`
 4. Tên: copy dòng tiêu đề trên trang · Lượt bán: copy chỗ "30k+ lượt bán" → `-s`
 
-Rồi chạy:
+Rồi chạy — không cần `-i` nếu truyền `-p` để script tự lấy ảnh từ trang sản phẩm:
 
 ```bash
 python add.py "<link affiliate>" -c ao \
-  -t "Tên sản phẩm" -d "Mô tả phụ" -s "30k+" \
-  -i "https://down-vn.img.susercontent.com/..." \
+  -t "Tên sản phẩm" -s "30k+" \
+  -p "https://shopee.vn/product/<shop_id>/<item_id>" \
   --expect-item 40604188350 --push
 ```
 
@@ -46,7 +46,9 @@ Không cần `-t`/`-i` nếu dùng link Shopee thường (không phải link aff
 - **Nghỉ 2–3s giữa các link.** Gọi dồn dập dễ bị Shopee chặn.
 - **Luôn truyền `--expect-item <id>`** (id trên URL trang offer). Script mở link ra URL thật rồi đối chiếu id — bắt được trường hợp copy nhầm/thiếu ký tự.
 - **Chạy `--dry-run` trước** khi ghi thật, để xem tên/ảnh/link có đúng không.
-- Script tự chặn: link không mở được, id không khớp, thiếu tên, link đã có trong `products.csv`.
+- Script tự chặn: link không mở được, id không khớp, thiếu tên, link đã có trong `products.csv`,
+  **trùng id sản phẩm**, **tên giống ≥50% token** với sản phẩm đã có.
+  Trường hợp trùng thật nhưng vẫn muốn thêm (khác shop, khác biến thể) → `--force`.
 - Cảnh báo (không chặn): ảnh không thuộc CDN `*.img.susercontent.com`.
 
 ### File dữ liệu
@@ -54,11 +56,15 @@ Không cần `-t`/`-i` nếu dùng link Shopee thường (không phải link aff
 `products.csv` — 1 dòng 1 sản phẩm, ô nào chứa dấu phẩy thì bọc trong `"..."` (script tự làm):
 
 ```
-cat,title,desc,img,link,sold
-ao,Tên sản phẩm,Mô tả phụ,https://...webp,https://s.shopee.vn/xxx,30k+
+id,cat,title,img,link,sold
+40604188350,ao,Tên sản phẩm,https://...webp,https://s.shopee.vn/xxx,30k+
 ```
 
-`cat` = `ao` | `quan` | `fullset`. `sold` để trống thì thẻ không hiện chip "đã bán".
+`id` = id sản phẩm Shopee (dùng để chặn trùng). `cat` = `ao` | `quan` | `fullset`.
+`sold` để trống thì thẻ không hiện chip "đã bán" và bị đẩy xuống cuối khi sắp xếp.
+
+Trang có ô **Sắp xếp**: `Bán chạy` (mặc định, theo `sold` giảm dần) · `Mới thêm` (thứ tự trong CSV) ·
+`Tên A→Z`. Trạng thái lưu trên URL: `?c=ao&sort=sold`.
 
 Trang đọc CSV bằng `fetch` lúc tải → **phải chạy qua http**, mở trực tiếp `file://` sẽ báo lỗi.
 Sau này muốn chuyển sang database thì chỉ cần `add.py` ghi vào DB và cho trang đọc từ API,
