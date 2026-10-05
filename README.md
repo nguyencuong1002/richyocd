@@ -29,6 +29,9 @@ Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 
 `c` = `ao` | `quan` | `fullset`.
 
+Tên (`t`) tự động về **Title Case** khi hiển thị — cứ gõ tự nhiên, không cần chỉnh tay.
+Mã/từ viết tắt (`GSM`, `XL`, `XXL`, `XS`, `NB`) và số dính chữ (`280GSM`) được giữ nguyên.
+
 ## Sửa trang
 
 - Tên + link social: `index.html`, thẻ `<header>`.

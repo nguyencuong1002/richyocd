@@ -140,6 +140,19 @@
 
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+  // Title Case cho tên sản phẩm. Giữ nguyên viết hoa của mã/từ viết tắt.
+  const KEEP = new Set(['gsm','xl','xxl','xxxl','xs','nb']);
+  const capFirst = p => {
+    const i = p.search(/\p{L}/u);
+    return i < 0 ? p : p.slice(0, i) + p[i].toUpperCase() + p.slice(i + 1).toLowerCase();
+  };
+  const titleCase = s => String(s || '').trim().split(/\s+/).map(w => {
+    const core = w.replace(/[^\p{L}\p{N}]/gu, '');
+    if (core && core === core.toUpperCase() && /\d/.test(core)) return w;          // 280GSM
+    if (KEEP.has(core.toLowerCase())) return w.replace(/\p{L}/gu, c => c.toUpperCase());
+    return w.split('-').map(capFirst).join('-');
+  }).join(' ');
+
   function render(){
     [...$tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === cur)));
     const list = PRODUCTS.filter(p => p.c === cur);
@@ -147,9 +160,9 @@
       <a class="card" href="${esc(p.l)}" target="_blank" rel="noopener sponsored">
         <div class="thumb"><img loading="${idx ? 'lazy' : 'eager'}" ${idx ? '' : 'fetchpriority="high" '}decoding="async"
              referrerpolicy="no-referrer" width="800" height="800"
-             src="${esc(p.i || '')}" alt="${esc(p.t || 'Ảnh sản phẩm')}"></div>
+             src="${esc(p.i || '')}" alt="${esc(titleCase(p.t) || 'Ảnh sản phẩm')}"></div>
         <div class="txt">
-          <span class="t grad">${esc(p.t || 'Sản phẩm')}</span>
+          <span class="t grad">${esc(titleCase(p.t) || 'Sản phẩm')}</span>
           ${p.s ? `<span class="s">${esc(p.s)}</span>` : ''}
         </div>
       </a>`).join('') || '<p class="empty grad">Chưa có sản phẩm trong mục này…</p>';
