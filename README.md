@@ -8,14 +8,14 @@ Static, không build, không JS framework. GitHub Pages, branch `main`, thư m�
 ## Thêm sản phẩm
 
 ```bash
-python add.py "https://s.shopee.vn/xxxx" -c quan -s 15 --push
+python add.py "https://s.shopee.vn/xxxx" -c quan --push
 ```
 
 Tự lấy ảnh + tên từ `og:title`/`og:image` của trang, chèn lên đầu `products.js`, rồi commit + push.
-Bỏ `-s` nếu không có badge giảm giá. Shopee thường chặn bot → nhập tay:
+Shopee thường chặn bot → nhập tay:
 
 ```bash
-python add.py "<link>" -c quan -t "Tên sản phẩm" -s 15 \
+python add.py "<link>" -c quan -t "Tên sản phẩm" \
   -i "https://down-vn.img.susercontent.com/file/xxx.webp" --push
 ```
 
@@ -24,7 +24,7 @@ python add.py "<link>" -c quan -t "Tên sản phẩm" -s 15 \
 Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 
 ```js
-{c:"ao", t:"Tên", s:"mô tả phụ", i:"link ảnh", l:"link affiliate", d:"15"}
+{c:"ao", t:"Tên", s:"mô tả phụ", i:"link ảnh", l:"link affiliate"}
 ```
 
 `c` = `ao` | `quan` | `fullset`.

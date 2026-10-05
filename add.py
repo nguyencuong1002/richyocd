@@ -27,7 +27,7 @@ def og(url):
 
 def js_line(p):
     parts = [f'c:"{p["c"]}"']
-    for k in ("t", "s", "i", "l", "d"):
+    for k in ("t", "s", "i", "l"):
         if p.get(k):
             parts.append(f'{k}:"{p[k].replace(chr(92), "").replace(chr(34), "")}"')
     return "  {" + ", ".join(parts) + "},"
@@ -37,7 +37,6 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("url")
     ap.add_argument("-c", "--cat", required=True, choices=CATS)
-    ap.add_argument("-s", "--sale", default="")
     ap.add_argument("-t", "--title", default="")
     ap.add_argument("-i", "--img", default="")
     ap.add_argument("--push", action="store_true", help="git commit + push sau khi them")
@@ -55,7 +54,6 @@ def main():
         "s": "",
         "i": a.img or img,
         "l": a.url,
-        "d": a.sale.strip().rstrip("%"),
     }
     print("  them:", p["t"][:60])
     print("  anh :", p["i"][:80] or "(trong)")
