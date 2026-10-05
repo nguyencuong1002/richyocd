@@ -1,19 +1,25 @@
 # Richyocd — link bio affiliate
 
-Static, không build, không JS framework. Chạy trên GitHub Pages (1 repo, branch `main`, thư mục `/`).
+**Live:** https://nguyencuong1002.github.io/richyocd/
+**Repo:** https://github.com/nguyencuong1002/richyocd
+
+Static, không build, không JS framework. GitHub Pages, branch `main`, thư mục `/`.
 
 ## Thêm sản phẩm
 
 ```bash
-python add.py "https://shope.ee/xxxx" -c ao -s 15 --push
+python add.py "https://s.shopee.vn/xxxx" -c quan -s 15 --push
 ```
 
 Tự lấy ảnh + tên từ `og:title`/`og:image` của trang, chèn lên đầu `products.js`, rồi commit + push.
-Bỏ `-s` nếu không có badge giảm giá. Nếu trang chặn bot (không lấy được og) → nhập tay:
+Bỏ `-s` nếu không có badge giảm giá. Shopee thường chặn bot → nhập tay:
 
 ```bash
-python add.py "<link>" -c quan -t "Tên sản phẩm" -i "https://.../anh.jpg"
+python add.py "<link>" -c quan -t "Tên sản phẩm" -s 15 \
+  -i "https://down-vn.img.susercontent.com/file/xxx.webp" --push
 ```
+
+(Mở trang sản phẩm trên Shopee → chuột phải ảnh → Copy image address.)
 
 Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 
