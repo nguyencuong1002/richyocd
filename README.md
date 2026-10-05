@@ -32,7 +32,7 @@ Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 ## Sửa trang
 
 - Tên + link social: `index.html`, thẻ `<header>`.
-- Avatar: để file `avatar.jpg` cạnh `index.html`.
+- Avatar: file `avatar.png` (150×150) cạnh `index.html`.
 
 ## Xem thử tại máy
 
