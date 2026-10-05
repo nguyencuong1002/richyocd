@@ -36,8 +36,8 @@
   nav button:hover{color:var(--fg);border-color:#3d3d44;background:var(--card-hi)}
   nav button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#111}
 
-  #grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-  @media(max-width:680px){#grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+  #products-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  @media(max-width:680px){#products-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 
   .card{display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--line);
         border-radius:14px;overflow:hidden;text-decoration:none;
@@ -53,8 +53,8 @@
   .card .cta{display:block;margin-top:11px;color:var(--brand);font-size:13px;font-weight:600;
              letter-spacing:.01em;white-space:nowrap}
 
-  .empty{padding:40px 4px;color:#6b6b73;font-size:15.5px}
-  footer{margin-top:32px;text-align:center;color:#63636b;font-size:13.5px}
+  .empty{padding:40px 4px;color:#7c7c85;font-size:15.5px}
+  footer{margin-top:32px;text-align:center;color:#7c7c85;font-size:13.5px}
 
   @media(prefers-reduced-motion:reduce){
     *{transition:none!important}
@@ -81,14 +81,14 @@
   </header>
 
   <nav id="tabs" role="tablist" aria-label="Danh mục sản phẩm"></nav>
-  <div id="grid" role="tabpanel" aria-live="polite"></div>
+  <div id="products-panel" role="tabpanel" aria-label="Danh sách sản phẩm" aria-live="polite"></div>
   <footer>Mua qua link này để ủng hộ mình nhé&nbsp;♥</footer>
 </main>
 
 <script src="products.js"></script>
 <script>
   const TABS = [["ao","Áo"],["quan","Quần"],["fullset","Fullset"]];
-  const $tabs = document.getElementById('tabs'), $grid = document.getElementById('grid');
+  const $tabs = document.getElementById('tabs'), $grid = document.getElementById('products-panel');
   const PRODUCTS = window.PRODUCTS || [];
   const wanted = new URLSearchParams(location.search).get('c');
   let cur = TABS.some(([id]) => id === wanted) ? wanted
@@ -99,6 +99,7 @@
     b.textContent = label; b.dataset.id = id;
     b.type = 'button';
     b.setAttribute('role','tab');
+    b.setAttribute('aria-controls','products-panel');
     b.onclick = ()=>{ cur = id; history.replaceState(null, '', '?c=' + id); render(); };
     $tabs.append(b);
   });
@@ -108,10 +109,11 @@
   function render(){
     [...$tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === cur)));
     const list = PRODUCTS.filter(p => p.c === cur);
-    $grid.innerHTML = list.map(p => `
+    $grid.innerHTML = list.map((p,idx) => `
       <a class="card" href="${esc(p.l)}" target="_blank" rel="noopener sponsored">
-        <div class="thumb"><img loading="lazy" decoding="async" referrerpolicy="no-referrer"
-             width="800" height="800" src="${esc(p.i || '')}" alt=""></div>
+        <div class="thumb"><img loading="${idx ? 'lazy' : 'eager'}" ${idx ? '' : 'fetchpriority="high" '}decoding="async"
+             referrerpolicy="no-referrer" width="800" height="800"
+             src="${esc(p.i || '')}" alt="${esc(p.t || 'Ảnh sản phẩm')}"></div>
         <div class="txt">
           <span class="t">${esc(p.t || 'Sản phẩm')}</span>
           ${p.s ? `<span class="s">${esc(p.s)}</span>` : ''}
