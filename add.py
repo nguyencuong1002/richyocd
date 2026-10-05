@@ -12,6 +12,7 @@ Khi them NHIEU link: nghi 2-3s giua cac lan goi (Shopee de chan neu goi don dap)
 import argparse, html, os, re, subprocess, sys, urllib.request
 
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125 Safari/537.36"
+CRAWLER_UA = "facebookexternalhit/1.1"
 CATS = ("ao", "quan", "fullset")
 CSV = "products.csv"
 IMG_OK = re.compile(r"^https://[\w-]+\.img\.susercontent\.com/")
@@ -24,17 +25,35 @@ def die(msg):
 
 
 def og(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "vi"})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        page = r.read(400_000).decode("utf-8", "ignore")
+    """og:title / og:image.
 
-    def find(prop):
-        m = re.search(rf'<meta[^>]+(?:property|name)=["\']{prop}["\'][^>]+content=["\']([^"\']+)', page, re.I)
-        if not m:
-            m = re.search(rf'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']{prop}["\']', page, re.I)
-        return html.unescape(m.group(1)) if m else ""
+    Thu UA crawler truoc: Shopee tra HTML SSR co the og: cho no, con UA browser
+    thi chi tra shell React rong (khong co og: gi).
+    """
+    for ua in (CRAWLER_UA, UA):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": ua, "Accept-Language": "vi"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                page = r.read(600_000).decode("utf-8", "ignore")
+        except Exception:
+            continue
 
-    return find("og:title"), find("og:image")
+        def find(prop):
+            m = re.search(rf'<meta[^>]+(?:property|name)=["\']{prop}["\'][^>]+content=["\']([^"\']+)', page, re.I)
+            if not m:
+                m = re.search(rf'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']{prop}["\']', page, re.I)
+            return html.unescape(m.group(1)) if m else ""
+
+        img = find("og:image")
+        if img:
+            title = re.sub(r"\s*\|\s*Shopee(?:\s+Việt\s+Nam)?\s*$", "", find("og:title")).strip()
+            return title, thumb(img)
+    return "", ""
+
+
+def thumb(url):
+    """Ban resize cua CDN Shopee (10KB thay vi vai tram KB) - transform chinh chu."""
+    return url + "@resize_w640_nl.webp" if IMG_OK.match(url or "") and "@" not in url else url
 
 
 def resolve(url):
@@ -81,6 +100,7 @@ def main():
     ap.add_argument("-t", "--title", default="")
     ap.add_argument("-d", "--desc", default="", help="mo ta phu hien duoi ten")
     ap.add_argument("-i", "--img", default="")
+    ap.add_argument("-p", "--product-url", default="", help="link shopee.vn/product/... de lay anh khi link affiliate chan bot")
     ap.add_argument("-s", "--sold", default="", help="luot ban hien tren the, vd 30k+")
     ap.add_argument("--expect-item", default="", help="id san pham de doi chieu link")
     ap.add_argument("--no-verify", action="store_true", help="bo qua doi chieu link")
@@ -97,7 +117,7 @@ def main():
     # ten / anh: uu tien tham so tay, fallback og: tags
     title, img = "", ""
     try:
-        title, img = og(a.url)
+        title, img = og(a.product_url or a.url)
     except Exception as e:
         print(f"[!] khong lay duoc og tags ({e}) - phai nhap -t / -i", file=sys.stderr)
 
