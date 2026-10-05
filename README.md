@@ -21,6 +21,25 @@ python add.py "<link>" -c quan -t "Tên sản phẩm" \
 
 (Mở trang sản phẩm trên Shopee → chuột phải ảnh → Copy image address.)
 
+### Lấy link + ảnh từ Shopee Affiliate (cần Chrome đã đăng nhập)
+
+Trang affiliate chặn bot nên `add.py` không tự lấy được `og:` tags. Lấy tay 4 giá trị:
+
+1. Mở `https://affiliate.shopee.vn/offer/product_offer/<id>` trong Chrome
+2. Bấm **Lấy link** → **Sao chép Link** → dán vào `-t`/link
+3. Chuột phải ảnh thumbnail → **Copy image address** → dán vào `-i`
+4. Tên: copy dòng tiêu đề trên trang
+
+Rồi chạy:
+
+```bash
+python add.py "<link affiliate>" -c ao \
+  -t "Tên sản phẩm" -d "Mô tả phụ" \
+  -i "https://down-vn.img.susercontent.com/..." --push
+```
+
+Không cần `-t`/`-i` nếu dùng link Shopee thường (không phải link affiliate) — khi đó script tự lấy.
+
 Hoặc sửa thẳng `products.js`, mỗi sản phẩm 1 dòng:
 
 ```js

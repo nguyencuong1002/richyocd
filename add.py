@@ -38,6 +38,7 @@ def main():
     ap.add_argument("url")
     ap.add_argument("-c", "--cat", required=True, choices=CATS)
     ap.add_argument("-t", "--title", default="")
+    ap.add_argument("-d", "--desc", default="", help="mo ta phu hien duoi ten")
     ap.add_argument("-i", "--img", default="")
     ap.add_argument("--push", action="store_true", help="git commit + push sau khi them")
     a = ap.parse_args()
@@ -51,7 +52,7 @@ def main():
     p = {
         "c": a.cat,
         "t": a.title or title or "(chua co ten)",
-        "s": "",
+        "s": a.desc,
         "i": a.img or img,
         "l": a.url,
     }
